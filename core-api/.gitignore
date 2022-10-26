@@ -1,0 +1,16 @@
+node_modules
+
+# local .env* files
+
+
+dist
+.DS_Store
+
+credentials/*
+.idea
+
+# logs
+*.log
+
+*.newrelic_agent.log
+data

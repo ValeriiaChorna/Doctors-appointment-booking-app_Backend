@@ -1,0 +1,4 @@
+{
+    // always use Unix LF line endings
+    "files.eol": "\n",
+}
