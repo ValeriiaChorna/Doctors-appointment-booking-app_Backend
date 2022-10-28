@@ -40,12 +40,10 @@ describe('AppointmentService', () => {
         description: faker.lorem.lines(1),
       };
 
-      const call = () => {
-        sut.bookAppointment(bookAppointmentInput);
-      }
+      const call = () => sut.bookAppointment(bookAppointmentInput);
 
-      expect(call).toThrow(Error);
-      expect(call).toThrow("Appointment slot already taken");
+      await expect(call).rejects.toThrow(Error);
+      await expect(call).rejects.toThrow("Appointment slot already taken");
     });
   });
 });
