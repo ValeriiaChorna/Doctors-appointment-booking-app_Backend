@@ -11,7 +11,7 @@ import { faker } from "@faker-js/faker";
 const mockRepo: Partial<Repository<Doctor>> = {};
 
 describe("DoctorService", () => {
-  beforeEach(() => {
+  beforeAll(() => {
     Container.set(ConnectionManager, createMockRepo(mockRepo));
   });
 
