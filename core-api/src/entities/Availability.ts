@@ -27,6 +27,7 @@ export class Availability extends BaseEntity {
   @Column()
   endTimeUtc: string;
 
+  @Field(() => Doctor)
   @ManyToOne(() => Doctor, (doctor) => doctor.availability)
   doctor: Doctor;
 }

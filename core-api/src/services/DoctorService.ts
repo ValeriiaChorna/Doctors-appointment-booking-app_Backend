@@ -1,5 +1,6 @@
 import { Doctor } from "@/entities/Doctor";
 import { Availability } from "@/entities/Availability";
+import { Appointment } from "@/entities/Appointment";
 import { Slot } from "@/models/appointments/Slot";
 import { AddDoctorAvailabilityInput } from "@/models/doctor/AddDoctorAvailabilityInput";
 import { NotValidRequest } from "@/models/errors/NotValidRequest";
@@ -15,11 +16,11 @@ import {
   addMinutes,
   setHours,
   setMinutes,
-  getHours,
-  getMinutes, setSeconds, setMilliseconds,
+  getMinutes,
+  setSeconds,
+  setMilliseconds, isEqual,
 } from "date-fns";
 import { AddDoctorInput } from "@/models/doctor/AddDoctorInput";
-import {Appointment} from "@/entities/Appointment";
 
 @Service()
 export class DoctorService {
@@ -29,7 +30,7 @@ export class DoctorService {
     @InjectRepository(Availability)
     private readonly availabilityRepo: Repository<Availability>,
     @InjectRepository(Appointment)
-    private readonly appointmentRepo: Repository<Appointment>,
+    private readonly appointmentRepo: Repository<Appointment>
   ) {}
 
   getDoctors() {
@@ -117,11 +118,14 @@ export class DoctorService {
     }
     const periodLimit = 30;
     let slots: Slot[] = [];
-    const fromDate = setMilliseconds(setSeconds(new Date(from),0),0);
-    const endDate =
-      differenceInDays(fromDate, new Date(to)) < periodLimit
-        ? new Date(to)
-        : addDays(fromDate, periodLimit);
+    const fromDateRequested = setMilliseconds(setSeconds(new Date(from), 0), 0);
+    const endDateRequested =
+      differenceInDays(fromDateRequested, new Date(to)) < periodLimit
+        ? setMinutes(new Date(to), getMinutes(to) + 1)
+        : setMinutes(
+            addDays(fromDateRequested, periodLimit),
+            getMinutes(fromDateRequested) + 1
+          );
     const slotDuration = 15;
 
     const doctors = await this.getDoctors();
@@ -132,7 +136,6 @@ export class DoctorService {
     if (doctors && doctors.length) {
       slots = doctors.reduce((slotRes, doctor) => {
         const { availability, appointments } = doctor;
-        console.log('appointments',doctor.appointments)
 
         availability.forEach((availabilityItem) => {
           const {
@@ -142,8 +145,8 @@ export class DoctorService {
           } = availabilityItem;
 
           const doctorWorkDays = this.getDoctorWorkDays(
-            fromDate,
-            endDate,
+            fromDateRequested,
+            endDateRequested,
             dayOfWeek as Day
           );
 
@@ -152,33 +155,45 @@ export class DoctorService {
             const [endHours, endMinutes] = endWorkTime.split(":");
 
             doctorWorkDays.forEach((date) => {
-              const endDateFixed = setMinutes(
-                setHours(new Date(endDate), getHours(endDate)),
-                getMinutes(endDate) + 1
-              );
-              const dayStartTime = setMinutes(
+              const workDayStart = setMinutes(
                 setHours(new Date(date), Number(startHours)),
                 Number(startMinutes) || 0
               );
-              const dayEndTime = setMinutes(
+              const workDayEnd = setMinutes(
                 setHours(new Date(date), Number(endHours)),
                 Number(endMinutes) + 1
               );
 
+              const workDayStartByReq = isBefore(
+                workDayStart,
+                fromDateRequested
+              )
+                ? fromDateRequested
+                : workDayStart;
+
+              const workDayEndByReq = isBefore(workDayEnd, endDateRequested)
+                ? workDayEnd
+                : endDateRequested;
+
               const existedAppointmentByStartTime = (startTime: Date) =>
                 appointments && appointments.length
-                  ? appointments.find((item) => setMilliseconds(setSeconds(new Date(item.startTime),0),0) === startTime)
+                  ? appointments.find(
+                      (item) =>
+                      {
+                        const appointmentStartTimeFixed = setMilliseconds(
+                            setSeconds(new Date(item.startTime), 0),
+                            0
+                        )
+                        return isEqual(appointmentStartTimeFixed, startTime)
+                      }
+                    )
                   : null;
 
-              const dayEndTimeFinal = isBefore(dayEndTime, endDateFixed)
-                ? dayEndTime
-                : endDateFixed;
-
-              let currentStartTime = dayStartTime;
+              let currentStartTime = workDayStartByReq;
               while (
                 isBefore(
                   addMinutes(currentStartTime, slotDuration),
-                  dayEndTimeFinal
+                  workDayEndByReq
                 )
               ) {
                 const currentEndTime = addMinutes(

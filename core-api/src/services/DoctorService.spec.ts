@@ -93,7 +93,7 @@ describe("DoctorService", () => {
       const appointment = new Appointment();
 
       // set appointment start time to next monday at 2pm
-      const startTime = setMinutes(setHours(nextMonday(new Date()), 9), 15);
+      const startTime = setMinutes(setHours(nextMonday(new Date()), 14), 0);
       appointment.startTime = startTime;
       appointment.durationMinutes = 15;
       doctor.appointments = [appointment];
