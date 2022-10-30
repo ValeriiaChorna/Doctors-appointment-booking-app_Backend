@@ -8,10 +8,8 @@ import { Service } from "typedi";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 import {
-  getDay,
   differenceInDays,
   addDays,
-  nextDay,
   isBefore,
   addMinutes,
   setHours,
@@ -21,6 +19,7 @@ import {
   setMilliseconds, isEqual,
 } from "date-fns";
 import { AddDoctorInput } from "@/models/doctor/AddDoctorInput";
+import {Utils} from "@/utils/Utils";
 
 @Service()
 export class DoctorService {
@@ -30,7 +29,8 @@ export class DoctorService {
     @InjectRepository(Availability)
     private readonly availabilityRepo: Repository<Availability>,
     @InjectRepository(Appointment)
-    private readonly appointmentRepo: Repository<Appointment>
+    private readonly appointmentRepo: Repository<Appointment>,
+    private utils: Utils,
   ) {}
 
   getDoctors() {
@@ -90,28 +90,6 @@ export class DoctorService {
     return this.availabilityRepo.save(newAvailability);
   }
 
-  getDoctorWorkDays(fromDate: Date, toDate: Date, workDayOfWeek: Day) {
-    let doctorWorkDays: Date[] = [];
-
-    if (getDay(fromDate) === workDayOfWeek) {
-      doctorWorkDays.push(fromDate);
-    }
-    const nextStartDay = nextDay(fromDate, workDayOfWeek);
-    if (!doctorWorkDays.length && isBefore(nextStartDay, toDate)) {
-      doctorWorkDays.push(nextStartDay);
-    }
-
-    if (doctorWorkDays.length) {
-      let currentDay = doctorWorkDays[doctorWorkDays.length - 1];
-      while (isBefore(addDays(currentDay, 7), toDate)) {
-        doctorWorkDays.push(addDays(currentDay, 7));
-        currentDay = addDays(currentDay, 7);
-      }
-    }
-
-    return doctorWorkDays;
-  }
-
   async getAvailableSlots(from: Date, to: Date): Promise<Slot[]> {
     if (!from || !to) {
       throw new NotValidRequest("getAvailableSlots: invalid data");
@@ -144,7 +122,7 @@ export class DoctorService {
             endTimeUtc: endWorkTime,
           } = availabilityItem;
 
-          const doctorWorkDays = this.getDoctorWorkDays(
+          const doctorWorkDays = this.utils.getWorkingDaysInTimeSpan(
             fromDateRequested,
             endDateRequested,
             dayOfWeek as Day
