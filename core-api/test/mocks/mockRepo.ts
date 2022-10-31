@@ -6,9 +6,7 @@ const createMockRepo = (mockRepository: Partial<Repository<any>>) => {
     get: () => ({
       getRepository: (name: string) => {
         console.log(name);
-        return {
-          mockRepository,
-        };
+        return mockRepository;
       },
     }),
   };
