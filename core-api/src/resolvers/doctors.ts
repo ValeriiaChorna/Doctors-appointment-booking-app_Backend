@@ -17,7 +17,7 @@ export class DoctorResolver {
 
   @Mutation(() => Doctor)
   async addDoctor(@Arg("doctor") doctor: AddDoctorInput): Promise<Doctor> {
-    return this.doctorService.addDoctor(AddDoctorInput);
+    return this.doctorService.addDoctor(doctor);
   }
 
   @Query(() => [Slot])
