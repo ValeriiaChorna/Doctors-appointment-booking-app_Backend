@@ -78,17 +78,17 @@ You can also run tests from VSCode debugger scripts:
 
 
 
-Mutation example:
+###Mutation examples:
 1) Add doctor
 ```
    {
       query: `
-        mutation AddDoctor($doctor: AddDoctorInput!) {
-           addDoctor(doctor: $doctor) {
-             id
-             name
-           }
-        }
+          mutation AddDoctor($doctor: AddDoctorInput!) {
+             addDoctor(doctor: $doctor) {
+               id
+               name
+             }
+          }
       `,
       variables: {
         "doctor": { "name": "Dr.Lora"}
@@ -96,16 +96,16 @@ Mutation example:
    }
    ```
 
-2) Add doctor availability
+2) Add doctor's availability
 
 ```
   {
     query: `
-    mutation AddDoctorAvailability($availability: AddDoctorAvailabilityInput!) {
-      addDoctorAvailability(availability: $availability) {
-        id
-      }
-    }
+        mutation AddDoctorAvailability($availability: AddDoctorAvailabilityInput!) {
+          addDoctorAvailability(availability: $availability) {
+            id
+          }
+        }
     `,
     variables: {
       "availability":  {
